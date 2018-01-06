@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Path Maker</title>
+        <style>
+            #main {
+                border: solid 1px #0000ff;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="main" width="500" height="500"></canvas>
+        <button id="print_json_button">JSON</button>
+        <textarea id="print_json"></textarea>
+        <button id="upload">upload</button>
+        <script>
+            var path = [];
+            var canvas = document.getElementById('main');
+            var ctx = canvas.getContext('2d');
+            var scale = 10;
+            var offset = -250;
+            var f = (v) => {
+                return {
+                    x: (v.x + offset) / scale, 
+                    y: (v.y + offset) / scale * -1,
+                };
+            };
+            var g = (v) => {
+                return {
+                    x: v.x * scale - offset,
+                    y: v.y * scale * -1 - offset,
+                };
+            };
+            var click = (e) => {
+                var rect = e.target.getBoundingClientRect();
+                var x = e.clientX - rect.left;
+                var y = e.clientY - rect.top;
+                path.push(f({x: x, y: y}));
+                update();
+                console.log(path);
+            };
+            var draw_grid = () => {
+            };
+            var update = () => {
+                draw_grid();
+                var r = 4;
+                ctx.beginPath();
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                // draw points
+                for (var i = 0; i < path.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(g(path[i]).x, g(path[i]).y, r, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+                // draw lines
+                ctx.beginPath();
+                if (path.length > 0) {
+                    ctx.moveTo(g(path[0]).x, g(path[0]).y);
+                } else {
+                    return;
+                }
+                for (var i = 1; i < path.length; i++) {
+                    ctx.lineTo(g(path[i]).x, g(path[i]).y);
+                }
+                ctx.stroke();
+            };
+            var dump = () => {
+                document.getElementById('print_json').value = JSON.stringify(path);
+            };
+            var upload = () => {
+                var xmlhttp = new XMLHttpRequest();   // new HttpRequest instance 
+                xmlhttp.open("POST", "/upload-path");
+                xmlhttp.setRequestHeader("Content-Type", "application/json");
+                xmlhttp.send(JSON.stringify({path: path}));
+            };
+            document.getElementById('main').addEventListener('click', click);
+            document.getElementById('print_json_button').addEventListener('click', dump);
+            document.getElementById('upload').addEventListener('click', upload);
+        </script>
+    </body>
+</html>
